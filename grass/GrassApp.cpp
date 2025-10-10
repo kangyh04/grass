@@ -259,19 +259,15 @@ void GrassApp::BuildGrassGeometry()
 
 	static const int grassCount = 32;
 
-	int k = 0;
 	vector<GrassVertex> vertices(grassCount);
-	for (int i = 0; i < 4; ++i)
+	for (int i = 0; i < grassCount; ++i)
 	{
-		for (int j = 0; j < 4; ++j)
-		{
-			float x = -1.5f + i;
-			float z = -1.5f + j;
+		float x = MathHelper::RandF(-45.0f, 45.0f);
+		float y = 0.0f;
+		float z = MathHelper::RandF(-45.0f, 45.0f);
 
-			vertices[k].Pos = XMFLOAT3(x, 0.0f, z);
-			vertices[k].Size = XMFLOAT2(0.1f, 0.3f);
-			++k;
-		}
+		vertices[i].Pos = XMFLOAT3(x, y, z);
+		vertices[i].Size = XMFLOAT2(0.1f, 0.3f);
 	}
 
 	vector<uint16_t> indices =
