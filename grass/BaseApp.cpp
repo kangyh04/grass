@@ -75,7 +75,7 @@ void BaseApp::Update(const Timer& gt)
 		CloseHandle(eventHandle);
 	}
 
-	AnimateGrass(gt);
+	// AnimateGrass(gt);
 	UpdateInstanceBuffer(gt);
 	UpdateWindCB(gt);
 	UpdateMainPassCB(gt);
@@ -94,8 +94,6 @@ void BaseApp::Draw(const Timer& gt)
 	auto passCB = mCurrFrameResource->PassCB->Resource();
 	mCommandList->SetGraphicsRootConstantBufferView(1, passCB->GetGPUVirtualAddress());
 
-	auto windCB = mCurrFrameResource->WindCB->Resource();
-	mCommandList->SetGraphicsRootConstantBufferView(2, windCB->GetGPUVirtualAddress());
 
 	AnimateGrass(gt);
 
@@ -207,6 +205,8 @@ void BaseApp::AnimateGrass(const Timer& gt)
 {
 	auto cmdListAlloc = mCurrFrameResource->CmdListAlloc;
 
+	auto windCB = mCurrFrameResource->WindCB->Resource();
+	mCommandList->SetComputeRootConstantBufferView(2, windCB->GetGPUVirtualAddress());
 	mCommandList->SetComputeRootUnorderedAccessView(3, mGrassBuffer->GetGPUVirtualAddress());
 
 	mCommandList->Dispatch(1, 1, 1);
