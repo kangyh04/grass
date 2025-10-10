@@ -91,13 +91,12 @@ void BaseApp::Draw(const Timer& gt)
 
 	mCommandList->SetGraphicsRootSignature(mRootSignature.Get());
 
+	AnimateGrass(gt);
+
 	auto passCB = mCurrFrameResource->PassCB->Resource();
 	mCommandList->SetGraphicsRootConstantBufferView(1, passCB->GetGPUVirtualAddress());
 
 	mCommandList->SetGraphicsRootUnorderedAccessView(3, mGrassBuffer->GetGPUVirtualAddress());
-
-
-	AnimateGrass(gt);
 
 	mCommandList->RSSetViewports(1, &mScreenViewport);
 	mCommandList->RSSetScissorRects(1, &mScissorRect);
