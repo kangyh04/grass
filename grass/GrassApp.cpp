@@ -103,14 +103,14 @@ void GrassApp::BuildGrassBuffer()
 	}
 
 	auto defaultHeap = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
-	// auto uavDesc = CD3DX12_RESOURCE_DESC::Buffer(byteSize, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
-	auto uavDesc = CD3DX12_RESOURCE_DESC::Buffer(byteSize);
+	auto uavDesc = CD3DX12_RESOURCE_DESC::Buffer(byteSize, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
+	// auto uavDesc = CD3DX12_RESOURCE_DESC::Buffer(byteSize);
 	ThrowIfFailed(md3dDevice->CreateCommittedResource(
 		&defaultHeap,
 		D3D12_HEAP_FLAG_NONE,
 		&uavDesc,
-		// D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
-		D3D12_RESOURCE_STATE_COMMON,
+		D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
+		// D3D12_RESOURCE_STATE_COMMON,
 		nullptr,
 		IID_PPV_ARGS(mGrassBuffer.GetAddressOf())));
 
@@ -130,7 +130,8 @@ void GrassApp::BuildGrassBuffer()
 	mGrassUploadBuffer->Unmap(0, nullptr);
 
 	auto toCopyDest = CD3DX12_RESOURCE_BARRIER::Transition(mGrassBuffer.Get(),
-		D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST);
+		// D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_COPY_DEST);
+		D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_DEST);
 	mCommandList->ResourceBarrier(1, &toCopyDest);
 
 	mCommandList->CopyBufferRegion(mGrassBuffer.Get(), 0, mGrassUploadBuffer.Get(), 0, byteSize);
@@ -149,7 +150,7 @@ void GrassApp::BuildRootSignature()
 	slotRootParameter[2].InitAsConstantBufferView(2);
 	slotRootParameter[3].InitAsUnorderedAccessView(0);
 
-	CD3DX12_ROOT_SIGNATURE_DESC rootSigDesc(2, slotRootParameter,
+	CD3DX12_ROOT_SIGNATURE_DESC rootSigDesc(4, slotRootParameter,
 		0, nullptr,
 		D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 
