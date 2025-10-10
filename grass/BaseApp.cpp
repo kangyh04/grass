@@ -94,6 +94,8 @@ void BaseApp::Draw(const Timer& gt)
 	auto passCB = mCurrFrameResource->PassCB->Resource();
 	mCommandList->SetGraphicsRootConstantBufferView(1, passCB->GetGPUVirtualAddress());
 
+	mCommandList->SetGraphicsRootUnorderedAccessView(3, mGrassBuffer->GetGPUVirtualAddress());
+
 
 	AnimateGrass(gt);
 
