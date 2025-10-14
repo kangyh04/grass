@@ -1,5 +1,5 @@
-﻿  BaseApp.cpp
+﻿  GrassApp.cpp
 D:\Studying\grass\grass\BaseApp.h(93,23): warning C4305: 'initializing': truncation from 'double' to 'float'
-  (compiling source file 'BaseApp.cpp')
+  (compiling source file 'GrassApp.cpp')
   
   grass.vcxproj -> D:\Studying\grass\grass\x64\Debug\grass.exe

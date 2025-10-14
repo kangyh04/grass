@@ -39,7 +39,7 @@ bool BaseApp::Initialize()
 
 	Build();
 
-	// BuildWireFramePSOs();
+	BuildWireFramePSOs();
 
 	ThrowIfFailed(mCommandList->Close());
 
@@ -83,15 +83,16 @@ void BaseApp::Update(const Timer& gt)
 
 void BaseApp::Draw(const Timer& gt)
 {
+	string psoSuffix = mWireFrameMode ? "" : "_wireframe";
 	auto cmdListAlloc = mCurrFrameResource->CmdListAlloc;
 
 	ThrowIfFailed(cmdListAlloc->Reset());
 
 	ThrowIfFailed(mCommandList->Reset(cmdListAlloc.Get(), mPSOs["grassCS"].Get()));
 
-	mCommandList->SetGraphicsRootSignature(mRootSignature.Get());
-
 	AnimateGrass(gt);
+
+	mCommandList->SetGraphicsRootSignature(mRootSignature.Get());
 
 	auto passCB = mCurrFrameResource->PassCB->Resource();
 	mCommandList->SetGraphicsRootConstantBufferView(1, passCB->GetGPUVirtualAddress());
@@ -113,12 +114,12 @@ void BaseApp::Draw(const Timer& gt)
 	auto depthStencilView = DepthStencilView();
 	mCommandList->OMSetRenderTargets(1, &currentBackBufferView, true, &depthStencilView);
 
-	mCommandList->SetPipelineState(mPSOs["opaque"].Get());
+	mCommandList->SetPipelineState(mPSOs["opaque" + psoSuffix].Get());
 
 	DrawRenderItems(mCommandList.Get(), mRitemLayer[(int)RenderLayer::Opaque]);
 
-	mCommandList->SetPipelineState(mPSOs["grass"].Get());
-	// TODO : Draw Grass
+	mCommandList->SetPipelineState(mPSOs["grass" + psoSuffix].Get());
+	DrawRenderItems(mCommandList.Get(), mRitemLayer[(int)RenderLayer::Grass]);
 
 	auto toPresent = CD3DX12_RESOURCE_BARRIER::Transition(CurrentBackBuffer(),
 		D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
@@ -174,6 +175,8 @@ void BaseApp::OnKeyboardInput(const Timer& gt)
 {
 	const float dt = gt.GetDeltaTime();
 
+	mWireFrameMode = !(GetAsyncKeyState('1') & 0x8000);
+
 	if (GetAsyncKeyState('W') & 0x8000)
 	{
 		mCamera.Walk(10.0f * dt);
@@ -206,11 +209,20 @@ void BaseApp::AnimateGrass(const Timer& gt)
 {
 	auto cmdListAlloc = mCurrFrameResource->CmdListAlloc;
 
+	auto objectCB = mCurrFrameResource->ObjectCB->Resource();
 	auto windCB = mCurrFrameResource->WindCB->Resource();
+	auto passCB = mCurrFrameResource->PassCB->Resource();
+	// mCommandList->SetComputeRootSignature(mGrassCSRootSignature.Get());
+	mCommandList->SetComputeRootSignature(mRootSignature.Get());
+	mCommandList->SetComputeRootConstantBufferView(0, objectCB->GetGPUVirtualAddress());
+	mCommandList->SetComputeRootConstantBufferView(1, passCB->GetGPUVirtualAddress());
 	mCommandList->SetComputeRootConstantBufferView(2, windCB->GetGPUVirtualAddress());
 	mCommandList->SetComputeRootUnorderedAccessView(3, mGrassBuffer->GetGPUVirtualAddress());
 
 	mCommandList->Dispatch(1, 1, 1);
+
+	auto uavBarrier = CD3DX12_RESOURCE_BARRIER::UAV(mGrassBuffer.Get());
+	mCommandList->ResourceBarrier(1, &uavBarrier);
 }
 
 void BaseApp::UpdateInstanceBuffer(const Timer& gt)
@@ -237,7 +249,10 @@ void BaseApp::UpdateWindCB(const Timer& gt)
 {
 	auto currWindBuffer = mCurrFrameResource->WindCB.get();
 
-	currWindBuffer->CopyData(0, mWindCB);
+	WindConstants windCB;
+	windCB.Velocity = XMFLOAT3(0.1f, 0.0f, 0.0f);
+
+	currWindBuffer->CopyData(0, windCB);
 }
 
 void BaseApp::UpdateMainPassCB(const Timer& gt)

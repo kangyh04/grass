@@ -21,3 +21,15 @@ float4 AxisAngleToQuaternion(float3 axis, float angle)
     float halfAngle = angle * 0.5f;
     return float4(axis * sin(halfAngle), cos(halfAngle));
 }
+
+float4 QuaternionConjugate(float4 quaternion)
+{
+    return float4(-quaternion.x, -quaternion.y, -quaternion.z, quaternion.w);
+}
+
+float4 QuaternionInverse(float4 quaternion)
+{
+    float magnitudeSq = dot(quaternion, quaternion);
+    
+    return QuaternionConjugate(quaternion) / magnitudeSq;
+}

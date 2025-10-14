@@ -4,11 +4,13 @@
 struct Bone
 {
 	XMFLOAT3 Position;
+	float Mass;
 	XMFLOAT4 Rotation;
 	XMFLOAT3 Velocity;
-	float Mass;
 	float Length;
 	int ParentIndex;
+	XMFLOAT3 LocalPosition;
+	XMFLOAT4 LocalRotation;
 };
 
 class GrassApp : public BaseApp
@@ -95,8 +97,10 @@ void GrassApp::BuildGrassBuffer()
 			bones[index].Position = XMFLOAT3(0.0f, 0.0f, 0.0f);
 			bones[index].Rotation = XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
 			bones[index].Velocity = XMFLOAT3(0.0f, 0.0f, 0.0f);
+			bones[index].LocalPosition = XMFLOAT3(0.0f, 0.0f, 0.0f);
+			bones[index].LocalRotation = XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
 			bones[index].Mass = 1.0f;
-			bones[index].Length = 1.0f;
+			bones[index].Length = 0.3f;
 			UINT parentIndex = MathHelper::Max<int>((i - 1) * 32 + j, -1);
 			bones[index].ParentIndex = parentIndex;
 		}
@@ -172,6 +176,31 @@ void GrassApp::BuildRootSignature()
 		serializedRootSig->GetBufferPointer(),
 		serializedRootSig->GetBufferSize(),
 		IID_PPV_ARGS(mRootSignature.GetAddressOf())));
+
+	CD3DX12_ROOT_PARAMETER csSlotRootParameter[2];
+	csSlotRootParameter[0].InitAsConstantBufferView(2);
+	csSlotRootParameter[1].InitAsUnorderedAccessView(0);
+
+	CD3DX12_ROOT_SIGNATURE_DESC csRootSigDesc(2, csSlotRootParameter,
+		0,
+		nullptr,
+		D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+
+	hr = D3D12SerializeRootSignature(&csRootSigDesc, D3D_ROOT_SIGNATURE_VERSION_1,
+		serializedRootSig.GetAddressOf(), errorBlob.GetAddressOf());
+
+	if (errorBlob != nullptr)
+	{
+		OutputDebugStringA((char*)errorBlob->GetBufferPointer());
+	}
+
+	ThrowIfFailed(hr);
+
+	ThrowIfFailed(md3dDevice->CreateRootSignature(
+		0,
+		serializedRootSig->GetBufferPointer(),
+		serializedRootSig->GetBufferSize(),
+		IID_PPV_ARGS(mGrassCSRootSignature.GetAddressOf())));
 }
 
 void GrassApp::BuildDescriptorHeaps()
@@ -263,9 +292,9 @@ void GrassApp::BuildGrassGeometry()
 	vector<GrassVertex> vertices(grassCount);
 	for (int i = 0; i < grassCount; ++i)
 	{
-		float x = MathHelper::RandF(-45.0f, 45.0f);
+		float x = MathHelper::RandF(-5.0f, 05.0f);
 		float y = 0.0f;
-		float z = MathHelper::RandF(-45.0f, 45.0f);
+		float z = MathHelper::RandF(-5.0f, 05.0f);
 
 		vertices[i].Pos = XMFLOAT3(x, y, z);
 		vertices[i].Size = XMFLOAT2(0.1f, 0.3f);
@@ -413,4 +442,7 @@ void GrassApp::BuildPSOs()
 	};
 	grassCSPsoDesc.Flags = D3D12_PIPELINE_STATE_FLAG_NONE;
 	ThrowIfFailed(md3dDevice->CreateComputePipelineState(&grassCSPsoDesc, IID_PPV_ARGS(&mPSOs["grassCS"])));
+
+	mPsoDescs["opaque"] = opaquePsoDesc;
+	mPsoDescs["grass"] = grassPsoDesc;
 }
