@@ -90,15 +90,14 @@ void ProcessBone(int boneId)
     float3 upVec = float3(0.0f, 1.0f, 0.0f);
     
     float3 oUpVec = normalize(QuaternionRotateOptimized(bone.rotation, upVec));
-    // float3 oUpVec = normalize(QuaternionRotateOptimized(bone.localRotation, upVec));
     float3 tailPos = oUpVec * bone.length;
 
-    float3 torque = cross(tailPos, gWindVelocity);
+    float3 baseTorque = cross(tailPos, gWindVelocity);
 
-    float4 restoreError = QuaternionInverse(bone.localRotation);
-    float3 restoreTorque = (restoreError.xyz * K_RESTORE) - (bone.velocity * K_DAMPING);
+    float3 restoreTorque = (-bone.localRotation.xyz * 10.0f) - (bone.velocity * 1.0f);
 
-    torque += restoreTorque;
+    float3 torque = baseTorque.xyz + restoreTorque.xyz;
+    // torque += restoreTorque;
 
     float I = (1.0f / 3.0f) * bone.mass * bone.length * bone.length;
 
@@ -129,21 +128,18 @@ void CS(int3 dtid : SV_DispatchThreadID)
 {
     int boneId = dtid.x;
 
-    if (boneId == 0)
-    {
-        ProcessBone(boneId);
-        Bone bone = bones[boneId];
-        bones[boneId].rotation = bone.localRotation;
+    ProcessBone(boneId);
+    Bone bone = bones[boneId];
+    bones[boneId].rotation = bone.localRotation;
 
         [unroll]
-        for (uint j = 1; j < 5; ++j)
-        {
-            int childBoneId = 32 * j + boneId;
-            ApplyParent(childBoneId);
-//             ProcessBone(childBoneId);
-//             bone = bones[childBoneId];
-//             bones[childBoneId].rotation = QuaternionMultiply(bone.rotation, bone.localRotation);
-        }
+    for (uint j = 1; j < 5; ++j)
+    {
+        int childBoneId = 32 * j + boneId;
+        ApplyParent(childBoneId);
+        ProcessBone(childBoneId);
+        bone = bones[childBoneId];
+        bones[childBoneId].rotation = QuaternionMultiply(bone.rotation, bone.localRotation);
     }
 }
 
