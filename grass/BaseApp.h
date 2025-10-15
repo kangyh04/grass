@@ -48,6 +48,7 @@ protected:
 
 protected:
 	bool mWireFrameMode = false;
+	bool mWind = false;
 
 	vector<unique_ptr<FrameResource>> mFrameResources;
 	FrameResource* mCurrFrameResource = nullptr;

@@ -66,7 +66,7 @@ VertexOut VS(VertexIn vin)
 
 RWStructuredBuffer<Bone> bones : register(u0);
 
-const float K_RESTORE = 500.0f;
+const float K_RESTORE = 50.0f;
 const float K_DAMPING = 10.0f;
 
 void ApplyParent(int boneId)
@@ -90,6 +90,7 @@ void ProcessBone(int boneId)
     float3 upVec = float3(0.0f, 1.0f, 0.0f);
     
     float3 oUpVec = normalize(QuaternionRotateOptimized(bone.rotation, upVec));
+    // float3 oUpVec = normalize(QuaternionRotateOptimized(bone.localRotation, upVec));
     float3 tailPos = oUpVec * bone.length;
 
     float3 torque = cross(tailPos, gWindVelocity);
@@ -128,18 +129,21 @@ void CS(int3 dtid : SV_DispatchThreadID)
 {
     int boneId = dtid.x;
 
-    ProcessBone(boneId);
-    Bone bone = bones[boneId];
-    bones[boneId].rotation = bone.localRotation;
+    if (boneId == 0)
+    {
+        ProcessBone(boneId);
+        Bone bone = bones[boneId];
+        bones[boneId].rotation = bone.localRotation;
 
         [unroll]
-    for (uint j = 1; j < 5; ++j)
-    {
-        int childBoneId = 32 * j + boneId;
-        ApplyParent(childBoneId);
+        for (uint j = 1; j < 5; ++j)
+        {
+            int childBoneId = 32 * j + boneId;
+            ApplyParent(childBoneId);
 //             ProcessBone(childBoneId);
 //             bone = bones[childBoneId];
 //             bones[childBoneId].rotation = QuaternionMultiply(bone.rotation, bone.localRotation);
+        }
     }
 }
 
@@ -164,8 +168,6 @@ void GS(point VertexOut gin[1],
     float2 texC0, texC1;
     texC0 = float2(0.0f, 1.0f);
     texC1 = float2(1.0f, 1.0f);
-
-    Bone bone0 = bones[0];
 
     GeoOut gout0 = (GeoOut) 0.0f;
     gout0.PosH = mul(v0, gViewProj);

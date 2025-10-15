@@ -176,6 +176,7 @@ void BaseApp::OnKeyboardInput(const Timer& gt)
 	const float dt = gt.GetDeltaTime();
 
 	mWireFrameMode = !(GetAsyncKeyState('1') & 0x8000);
+	mWind = (GetAsyncKeyState('2') & 0x8000);
 
 	if (GetAsyncKeyState('W') & 0x8000)
 	{
@@ -207,22 +208,29 @@ void BaseApp::OnKeyboardInput(const Timer& gt)
 
 void BaseApp::AnimateGrass(const Timer& gt)
 {
-	auto cmdListAlloc = mCurrFrameResource->CmdListAlloc;
+	static int i = 0;
 
-	auto objectCB = mCurrFrameResource->ObjectCB->Resource();
-	auto windCB = mCurrFrameResource->WindCB->Resource();
-	auto passCB = mCurrFrameResource->PassCB->Resource();
-	// mCommandList->SetComputeRootSignature(mGrassCSRootSignature.Get());
-	mCommandList->SetComputeRootSignature(mRootSignature.Get());
-	mCommandList->SetComputeRootConstantBufferView(0, objectCB->GetGPUVirtualAddress());
-	mCommandList->SetComputeRootConstantBufferView(1, passCB->GetGPUVirtualAddress());
-	mCommandList->SetComputeRootConstantBufferView(2, windCB->GetGPUVirtualAddress());
-	mCommandList->SetComputeRootUnorderedAccessView(3, mGrassBuffer->GetGPUVirtualAddress());
+	// if (i < 1)
+	{
+		auto cmdListAlloc = mCurrFrameResource->CmdListAlloc;
 
-	mCommandList->Dispatch(1, 1, 1);
+		auto objectCB = mCurrFrameResource->ObjectCB->Resource();
+		auto windCB = mCurrFrameResource->WindCB->Resource();
+		auto passCB = mCurrFrameResource->PassCB->Resource();
+		// mCommandList->SetComputeRootSignature(mGrassCSRootSignature.Get());
+		mCommandList->SetComputeRootSignature(mRootSignature.Get());
+		mCommandList->SetComputeRootConstantBufferView(0, objectCB->GetGPUVirtualAddress());
+		mCommandList->SetComputeRootConstantBufferView(1, passCB->GetGPUVirtualAddress());
+		mCommandList->SetComputeRootConstantBufferView(2, windCB->GetGPUVirtualAddress());
+		mCommandList->SetComputeRootUnorderedAccessView(3, mGrassBuffer->GetGPUVirtualAddress());
 
-	auto uavBarrier = CD3DX12_RESOURCE_BARRIER::UAV(mGrassBuffer.Get());
-	mCommandList->ResourceBarrier(1, &uavBarrier);
+		mCommandList->Dispatch(1, 1, 1);
+
+		auto uavBarrier = CD3DX12_RESOURCE_BARRIER::UAV(mGrassBuffer.Get());
+		mCommandList->ResourceBarrier(1, &uavBarrier);
+
+		++i;
+	}
 }
 
 void BaseApp::UpdateInstanceBuffer(const Timer& gt)
@@ -250,7 +258,9 @@ void BaseApp::UpdateWindCB(const Timer& gt)
 	auto currWindBuffer = mCurrFrameResource->WindCB.get();
 
 	WindConstants windCB;
-	windCB.Velocity = XMFLOAT3(0.1f, 0.0f, 0.0f);
+	auto wind = mWind ? 10.0f : 0.0f;
+	// auto wind = 0.0f;
+	windCB.Velocity = XMFLOAT3(wind, 0.0f, 0.0f);
 
 	currWindBuffer->CopyData(0, windCB);
 }
