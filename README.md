@@ -58,6 +58,14 @@ DirectX 12 Compute Shader를 활용한 실시간 물리 기반 풀 애니메이�
 - 복원력(Restore Force)으로 원래 형태 유지
 - deltaTime 기반 프레임 독립적 시뮬레이션
 
+## 조작 방법
+- W/S: 카메라 전진/후진
+- A/D: 카메라 좌/우 이동
+- Q/E: 카메라 상/하 이동
+- 1: 와이어프레임 모드
+- 2: 바람 On/Off
+- 마우스 좌클릭, 이동: 시야 변경
+
 ## 요구사항
 - Windows 10/11
 - Visual Studio 2022
