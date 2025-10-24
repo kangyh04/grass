@@ -4,7 +4,7 @@ DirectX 12 Compute Shader를 활용한 실시간 물리 기반 풀 애니메이�
 
 ## 프로젝트 개요
 
-![Video Lavel](https://img.youtube.com/vi/2k9AXCyJiXg/0.jpg)
+[![Video Lavel](https://img.youtube.com/vi/2k9AXCyJiXg/0.jpg)](https://www.youtube.com/watch?v=2k9AXCyJiXg)
 
 "더 라스트 가디언"에서 영감을 받아, 풀이 바람에 따라 흔들리는 시스템을 DirectX12로 구현했습니다.
 
